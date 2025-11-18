@@ -1,0 +1,50 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+
+
+// {
+//   "compilerOptions": {
+//     "baseUrl": ".",
+//     "paths": {
+//       "@/*": ["./src/*"],
+//       "@/custom_hooks/*": ["./src/app/custom_hooks/*"]
+//     }
+//   }
+// }
+
+
+
+
+// {
+//   "compilerOptions": {
+//     "baseUrl": "src",
+//     "paths": {
+//       "@/*": ["./*"],
+//       "@/custom_hooks/*": ["./app/custom_hooks/*"]
+//     }
+//   }
+// }
+
+
+
+
+
+
+
+
+
+// {
+//   "compilerOptions": {
+//     "baseUrl": "src",
+//     "paths": {
+//       "@/*": ["*"],
+//        "@/custom_hooks/*": ["./src/app/custom_hooks/*"]
+//     }
+//   }
+// }

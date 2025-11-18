@@ -1,0 +1,103 @@
+
+.ec-side-cart .ec-cart-inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ec-side-cart .ec-cart-top {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.ec-side-cart .ec-cart-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.ec-side-cart .ec-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.ec-side-cart .eccart-pro-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ec-side-cart .eccart-pro-items li {
+  display: flex;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.ec-side-cart .sidekka_pro_img {
+  margin-right: 15px;
+}
+
+.ec-side-cart .ec-pro-content {
+  flex: 1;
+  position: relative;
+}
+
+.ec-side-cart .cart_pro_title {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.ec-side-cart .cart-price {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.ec-side-cart .qty-plus-minus {
+  display: flex;
+  align-items: center;
+}
+
+.ec-side-cart .ec_qtybtn {
+  cursor: pointer;
+  padding: 2px 8px;
+  border: 1px solid #ddd;
+}
+
+.ec-side-cart .qty-input {
+  width: 40px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-left: none;
+  border-right: none;
+  padding: 2px;
+}
+
+.ec-side-cart .remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 18px;
+}
+
+.ec-side-cart .ec-cart-bottom {
+  padding: 15px;
+  border-top: 1px solid #eee;
+}
+
+.ec-side-cart .cart-table {
+  margin-bottom: 15px;
+}
+
+.ec-side-cart .primary-color {
+  color: #ff3f6c;
+  font-weight: 600;
+}
+
+.ec-side-cart .cart_btn .btn {
+  margin-bottom: 10px;
+}
