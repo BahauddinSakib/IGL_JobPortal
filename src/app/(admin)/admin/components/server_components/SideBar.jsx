@@ -35,6 +35,14 @@ const SideBar = () => {
               </Link>
               <hr />
             </li>
+                      {/* Job Posts */}
+               <li>
+              <Link className="sidenav-item-link" href="/admin/job-review">
+                <i className="mdi mdi-briefcase-outline"></i>
+                <span className="nav-text">Job Posts</span>
+              </Link>
+              <hr />
+            </li>
 
 {/* Job Attributes */}
 <li className="has-sub">
@@ -47,7 +55,7 @@ const SideBar = () => {
     }}
     style={{ cursor: 'pointer' }}
   >
-    <i className="mdi mdi-briefcase-outline"></i>
+    <i className="mdi mdi-briefcase-plus"></i>
     <span className="nav-text">Job Attributes</span>{" "}
     <b className="caret"></b>
   </a>
@@ -117,207 +125,8 @@ const SideBar = () => {
   </div>
   <hr />
 </li>
-            {/* Users */}
-            <li className="has-sub">
-              <a 
-                className="sidenav-item-link" 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  toggleMenu('users');
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                <i className="mdi mdi-account-group"></i>
-                <span className="nav-text">Users</span>{" "}
-                <b className="caret"></b>
-              </a>
-              <div className={`collapse ${activeMenu === 'users' ? 'show' : ''}`}>
-                <ul className="sub-menu" id="users" data-parent="#sidebar-menu">
-                  <li>
-                    <Link 
-                      className="sidenav-item-link" 
-                      href="/admin/users/clients"
-                      style={{ fontWeight: 'bold', padding: '8px 15px', margin: '5px', backgroundColor: '#f8f9fa', borderRadius: '5px', display: 'block' }}
-                    >
-                      <span className="nav-text">Registered Clients</span>
-                    </Link>
-                  </li>
-                  <li className="">
-                    <Link 
-                      className="sidenav-item-link" 
-                      href="/admin/users/guest-clients"
-                      style={{ fontWeight: 'bold', padding: '8px 15px', margin: '5px', backgroundColor: '#f8f9fa', borderRadius: '5px', display: 'block' }}
-                    >
-                      <span className="nav-text">Guest Clients</span>
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <hr />
-            </li>
 
-           
 
-            {/* Category */}
-            <li className="has-sub">
-              <a 
-                className="sidenav-item-link" 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  toggleMenu('categories');
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                <i className="mdi mdi-dns-outline"></i>
-                <span className="nav-text">Categories</span>{" "}
-                <b className="caret"></b>
-              </a>
-              <div className={`collapse ${activeMenu === 'categories' ? 'show' : ''}`}>
-                <ul className="sub-menu" id="categorys" data-parent="#sidebar-menu">
-                  <li className="">
-                    <Link 
-                      className="sidenav-item-link" 
-                      href="/admin/category/add-main-category"
-                      style={{ fontWeight: 'bold', padding: '8px 15px', margin: '5px', backgroundColor: '#f8f9fa', borderRadius: '5px', display: 'block' }}
-                    >
-                      <span className="nav-text">Add Main Category</span>
-                    </Link>
-                  </li>
-                  <li className="">
-                    <Link 
-                      className="sidenav-item-link" 
-                      href="/admin/category/add-sub-category"
-                      style={{ fontWeight: 'bold', padding: '8px 15px', margin: '5px', backgroundColor: '#f8f9fa', borderRadius: '5px', display: 'block' }}
-                    >
-                      <span className="nav-text">Add Sub Category</span>
-                    </Link>
-                  </li>
-                  <li className="">
-                    <Link 
-                      className="sidenav-item-link" 
-                      href="/admin/category/add-sub-sub-category"
-                      style={{ fontWeight: 'bold', padding: '8px 15px', margin: '5px', backgroundColor: '#f8f9fa', borderRadius: '5px', display: 'block' }}
-                    >
-                      <span className="nav-text">Add Sub Sub Category</span>
-                    </Link>
-                  </li>
-                  <li className="">
-                    <Link 
-                      className="sidenav-item-link" 
-                      href="/admin/category/view-main-categories"
-                      style={{ fontWeight: 'bold', padding: '8px 15px', margin: '5px', backgroundColor: '#f8f9fa', borderRadius: '5px', display: 'block' }}
-                    >
-                      <span className="nav-text">View Main Categories</span>
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </li>
-
-            {/* Products */}
-            <li className="has-sub">
-              <a 
-                className="sidenav-item-link" 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  toggleMenu('products');
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                <i className="mdi mdi-palette-advanced"></i>
-                <span className="nav-text">Products</span>{" "}
-                <b className="caret"></b>
-              </a>
-              <div className={`collapse ${activeMenu === 'products' ? 'show' : ''}`}>
-                <ul className="sub-menu" id="products" data-parent="#sidebar-menu">
-                  <li className="">
-                    <Link 
-                      className="sidenav-item-link" 
-                      href="/admin/products/add-product"
-                      style={{ fontWeight: 'bold', padding: '8px 15px', margin: '5px', backgroundColor: '#f8f9fa', borderRadius: '5px', display: 'block' }}
-                    >
-                      <span className="nav-text">Add Product</span>
-                    </Link>
-                  </li>
-                  <li className="">
-                    <Link 
-                      className="sidenav-item-link" 
-                      href="/admin/products/product-list"
-                      style={{ fontWeight: 'bold', padding: '8px 15px', margin: '5px', backgroundColor: '#f8f9fa', borderRadius: '5px', display: 'block' }}
-                    >
-                      <span className="nav-text">List Product</span>
-                    </Link>
-                  </li>
-                  <li className="">
-                    <Link 
-                      className="sidenav-item-link" 
-                      href="/admin/products/product-details"
-                      style={{ fontWeight: 'bold', padding: '8px 15px', margin: '5px', backgroundColor: '#f8f9fa', borderRadius: '5px', display: 'block' }}
-                    >
-                      <span className="nav-text">Product Detail</span>
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </li>
-
-            {/* Reviews */}
-            <li>
-              <Link className="sidenav-item-link" href="/review-list.html">
-                <i className="mdi mdi-star-half"></i>
-                <span className="nav-text">Reviews</span>
-              </Link>
-            </li>
-
-            {/* Site Settings */}
-            <li>
-              <Link className="sidenav-item-link" href="/admin/site-settings">
-                <i className="mdi mdi-star-half"></i>
-                <span className="nav-text">Site Settings</span>
-              </Link>
-            </li>
-
-            {/* Brands */}
-            <li className="has-sub">
-              <a 
-                className="sidenav-item-link" 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  toggleMenu('brands');
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                <i className="mdi mdi-dns-outline"></i>
-                <span className="nav-text">Brands</span>{" "}
-                <b className="caret"></b>
-              </a>
-              <div className={`collapse ${activeMenu === 'brands' ? 'show' : ''}`}>
-                <ul className="sub-menu" id="categorys" data-parent="#sidebar-menu">
-                  <li className="">
-                    <Link 
-                      className="sidenav-item-link" 
-                      href="/admin/brands/add-brand"
-                      style={{ fontWeight: 'bold', padding: '8px 15px', margin: '5px', backgroundColor: '#f8f9fa', borderRadius: '5px', display: 'block' }}
-                    >
-                      <span className="nav-text">Add Brand</span>
-                    </Link>
-                  </li>
-                  <li className="">
-                    <Link 
-                      className="sidenav-item-link" 
-                      href="/admin/brands/brand-list"
-                      style={{ fontWeight: 'bold', padding: '8px 15px', margin: '5px', backgroundColor: '#f8f9fa', borderRadius: '5px', display: 'block' }}
-                    >
-                      <span className="nav-text">Brands List</span>
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </li>
           </ul>
         </div>
       </div>

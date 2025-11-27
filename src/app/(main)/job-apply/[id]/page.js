@@ -1,310 +1,410 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
+import Navbar from "../../componants/navbarDark";
+import { useParams, useRouter } from "next/navigation";
 
-import Navbar from "../../componants/navbar";
-import Footer from "../../componants/footer";
-import ScrollTop from "../../componants/scrollTop";
+const JobApplicationForm = () => {
+  const params = useParams();
+  const router = useRouter();
+  const jobId = params.id;
 
-export default function JobApply({ params }){
-    const [job, setJob] = useState(null);
-    const [jobTypes, setJobTypes] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({
-        fullName: "",
-        email: "",
-        phone: "",
-        resume: null,
-        coverLetter: "",
-        jobTitle: "",
-        jobType: ""
-    });
+  const [jobData, setJobData] = useState(null);
+  const [formData, setFormData] = useState({
+    phoneNumber: "",
+    expectedSalary: "",
+    cvFile: null,
+  });
 
-    useEffect(() => {
-        if (params.id) {
-            fetchJobDetails();
-            fetchJobTypes();
-        }
-    }, [params.id]);
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
+  const [toast, setToast] = useState({ show: false, message: "", type: "" });
 
+  // Show toast message
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "" });
+    }, 4000);
+  };
+
+  // Fetch job details
+  useEffect(() => {
     const fetchJobDetails = async () => {
-        try {
-            setLoading(true);
-            const response = await fetch(`/api/auth/jobs?id=${params.id}`);
-            const data = await response.json();
-            
-            if (response.ok && data.job) {
-                setJob(data.job);
-                // Pre-fill job title
-                setFormData(prev => ({
-                    ...prev,
-                    jobTitle: data.job.j_title
-                }));
-            } else {
-                console.error('Error fetching job:', data.error);
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        } finally {
-            setLoading(false);
+      try {
+        const response = await fetch(`/api/auth/jobs/${jobId}`);
+
+        if (!response.ok) {
+          setFetchError(
+            response.status === 404
+              ? "Job not found"
+              : "Failed to fetch job details"
+          );
+          setIsLoading(false);
+          return;
         }
+
+        const job = await response.json();
+        setJobData(job);
+        setFetchError("");
+      } catch (error) {
+        setFetchError("Error connecting to server");
+        showToast("Error connecting to server", "error");
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    const fetchJobTypes = async () => {
-        try {
-            const response = await fetch('/api/auth/job-types');
-            const data = await response.json();
-            
-            if (response.ok) {
-                setJobTypes(data);
-            } else {
-                console.error('Error fetching job types:', data.error);
-            }
-        } catch (error) {
-            console.error('Error fetching job types:', error);
-        }
-    };
+    if (jobId) fetchJobDetails();
+  }, [jobId]);
 
-    const getJobTypeDisplayName = (jobTypeId) => {
-        if (!jobTypeId || !jobTypes.length) return "";
-        
-        const jobType = jobTypes.find(type => type.jt_id === parseInt(jobTypeId));
-        return jobType ? jobType.display_name : "";
-    };
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
 
-    const getImageSrc = (job) => {
-        if (job?.j_image && job.j_image !== '' && job.j_image !== null) {
-            return `/api/auth/images/${job.j_image}`;
-        }
-        return '/images/company/lenovo-logo.png';
-    };
+    setFormData((prev) => ({
+      ...prev,
+      [name]: files ? files[0] : value,
+    }));
 
-    const handleInputChange = (e) => {
-        const { name, value, type, files } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'file' ? files[0] : value
-        }));
-    };
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Handle form submission here
-        console.log('Form data:', formData);
-        console.log('Applying for job ID:', params.id);
-        // Add your form submission logic
-    };
+  const validateForm = () => {
+    const newErrors = {};
 
-    if (loading) {
-        return (
-            <>
-            <Navbar navClass="defaultscroll sticky" navLight={true}/>
-            <section className="bg-half-170 d-table w-100" style={{backgroundImage:"url('/images/hero/bg.jpg')", backgroundPosition:'top'}}>
-                <div className="bg-overlay bg-gradient-overlay"></div>
-                <div className="container">
-                    <div className="row mt-5 justify-content-center">
-                        <div className="col-12">
-                            <div className="title-heading text-center">
-                                <div className="spinner-border text-light mb-3" role="status">
-                                    <span className="visually-hidden">Loading...</span>
-                                </div>
-                                <h5 className="heading fw-semibold mb-0 sub-heading text-white title-dark mt-3">Loading Job Application...</h5>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <div className="text-center py-5">
-                <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                </div>
-                <p className="mt-2">Loading job details...</p>
-            </div>
-            </>
-        );
+    if (!formData.phoneNumber.trim()) {
+      newErrors.phoneNumber = "Phone number is required";
     }
 
-    return(
-        <>
-        <Navbar navClass="defaultscroll sticky" navLight={true}/>
-        <section className="bg-half-170 d-table w-100" style={{backgroundImage:"url('/images/hero/bg.jpg')", backgroundPosition:'top'}}>
-            <div className="bg-overlay bg-gradient-overlay"></div>
-            <div className="container">
-                <div className="row mt-5 justify-content-center">
-                    <div className="col-12">
-                        <div className="title-heading text-center">
-                            <Image 
-                                src={getImageSrc(job)} 
-                                width={65} 
-                                height={65} 
-                                className="avatar avatar-small rounded-pill p-2 bg-white" 
-                                alt={job?.j_company_name}
-                                onError={(e) => {
-                                    e.target.src = '/images/company/lenovo-logo.png';
-                                }}
-                            />
-                            <h5 className="heading fw-semibold mb-0 sub-heading text-white title-dark mt-3">
-                                {job?.j_title || 'Job Application'}
-                            </h5>
-                            <p className="text-white-50 mb-0 mt-2">{job?.j_company_name}</p>
-                        </div>
-                    </div>
-                </div>
+    if (!formData.expectedSalary.trim()) {
+      newErrors.expectedSalary = "Expected salary is required";
+    } else if (!/^\d+(\.\d{1,2})?$/.test(formData.expectedSalary)) {
+      newErrors.expectedSalary = "Please enter a valid salary (50000)";
+    }
 
-                <div className="position-middle-bottom">
-                    <nav aria-label="breadcrumb" className="d-block">
-                        <ul className="breadcrumb breadcrumb-muted mb-0 p-0">
-                            <li className="breadcrumb-item"><Link href="/">Jobnova</Link></li>
-                            <li className="breadcrumb-item"><Link href="/job-details">Jobs</Link></li>
-                            <li className="breadcrumb-item"><Link href={`/job-detail-one/${params.id}`}>Job Details</Link></li>
-                            <li className="breadcrumb-item active" aria-current="page">Job Apply</li>
-                        </ul>
-                    </nav>
-                </div>
-            </div>
-        </section>
-        <div className="position-relative">
-            <div className="shape overflow-hidden text-white">
-                <svg viewBox="0 0 2880 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 48H1437.5H2880V0H2160C1442.5 52 720 0 720 0H0V48Z" fill="currentColor"></path>
-                </svg>
-            </div>
+    if (!formData.cvFile) {
+      newErrors.cvFile = "CV is required";
+    } else if (formData.cvFile.type !== "application/pdf") {
+      newErrors.cvFile = "Only PDF files allowed";
+    }
+
+    setErrors(newErrors);
+    
+    // Show toast for validation errors
+    if (Object.keys(newErrors).length > 0) {
+      showToast("Please fix the form errors before submitting", "error");
+    }
+    
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Create FormData for file upload
+      const submitData = new FormData();
+      submitData.append("jobId", jobId);
+      submitData.append("phoneNumber", formData.phoneNumber);
+      submitData.append("expectedSalary", formData.expectedSalary);
+      submitData.append("cvFile", formData.cvFile);
+
+      const response = await fetch("/api/auth/job-applications", {
+        method: "POST",
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: submitData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit application");
+      }
+
+      const result = await response.json();
+      
+      // Show success toast
+      showToast("Application submitted successfully!", "success");
+      
+      // Reset form
+      setFormData({
+        phoneNumber: "",
+        expectedSalary: "",
+        cvFile: null,
+      });
+      
+      // Redirect to job-details page after a short delay
+      setTimeout(() => {
+        router.push("/job-details");
+      }, 1500);
+      
+    } catch (error) {
+      console.error("Submission error:", error);
+      // Show error toast
+      showToast(error.message || "Error submitting application. Please try again.", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Loading UI
+  if (isLoading) {
+    return (
+      <>
+        <Navbar />
+        <div
+          className="min-vh-100 d-flex justify-content-center align-items-center"
+          style={{
+            backgroundImage: "url('/images/applyJobBackground.jpg')",
+            backgroundColor: '#b3e6ff', // Fallback color
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed'
+          }}
+        >
+          <div className="spinner-border text-primary me-2"></div>
+          <span className="text-dark">Loading job details...</span>
         </div>
+      </>
+    );
+  }
 
-        <section className="section bg-light">
-            <div className="container">
-                <div className="row justify-content-center">
-                    <div className="col-lg-7 col-md-7">
-                        <div className="card border-0">
-                            <form className="rounded shadow p-4" onSubmit={handleSubmit}>
-                                <div className="row">
-                                    <div className="col-12">
-                                        <div className="mb-3">
-                                            <label className="form-label fw-semibold">Your Name :<span className="text-danger">*</span></label>
-                                            <input 
-                                                name="fullName" 
-                                                type="text" 
-                                                className="form-control" 
-                                                placeholder="Your full name"
-                                                value={formData.fullName}
-                                                onChange={handleInputChange}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-12">
-                                        <div className="mb-3">
-                                            <label className="form-label fw-semibold">Your Email :<span className="text-danger">*</span></label>
-                                            <input 
-                                                name="email" 
-                                                type="email" 
-                                                className="form-control" 
-                                                placeholder="Your email"
-                                                value={formData.email}
-                                                onChange={handleInputChange}
-                                                required
-                                            />
-                                        </div> 
-                                    </div>
-                                    <div className="col-12">
-                                        <div className="mb-3">
-                                            <label className="form-label fw-semibold">Your Phone no. :<span className="text-danger">*</span></label>
-                                            <input 
-                                                name="phone" 
-                                                type="tel" 
-                                                className="form-control" 
-                                                placeholder="Your phone number"
-                                                value={formData.phone}
-                                                onChange={handleInputChange}
-                                                required
-                                            />
-                                        </div> 
-                                    </div>
-                                    <div className="col-12">
-                                        <div className="mb-3">
-                                            <label className="form-label fw-semibold">Job Title :</label>
-                                            <input 
-                                                name="jobTitle" 
-                                                className="form-control" 
-                                                value={formData.jobTitle}
-                                                readOnly
-                                            />
-                                        </div>                                                                               
-                                    </div>
-                                    <div className="col-12">
-                                        <div className="mb-3">
-                                            <label className="form-label fw-semibold">Job Type :</label>
-                                            <select 
-                                                className="form-control form-select" 
-                                                name="jobType"
-                                                value={formData.jobType || getJobTypeDisplayName(job?.j_type_id)}
-                                                onChange={handleInputChange}
-                                            >
-                                                <option value="">Select Job Type</option>
-                                                {jobTypes.map((jobType) => (
-                                                    <option key={jobType.jt_id} value={jobType.display_name}>
-                                                        {jobType.display_name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div className="col-12">
-                                        <div className="mb-3">
-                                            <label className="form-label fw-semibold">Cover Letter :</label>
-                                            <textarea 
-                                                name="coverLetter" 
-                                                rows="4" 
-                                                className="form-control" 
-                                                placeholder="Why are you interested in this position?"
-                                                value={formData.coverLetter}
-                                                onChange={handleInputChange}
-                                            ></textarea>
-                                        </div>
-                                    </div>                                    
-                                    <div className="col-12">
-                                        <div className="mb-3">
-                                            <label htmlFor="formFile" className="form-label fw-semibold">Upload Your CV / Resume :<span className="text-danger">*</span></label>
-                                            <input 
-                                                className="form-control" 
-                                                type="file" 
-                                                name="resume"
-                                                onChange={handleInputChange}
-                                                accept=".pdf,.doc,.docx"
-                                                required
-                                            />
-                                        </div>                                                                               
-                                    </div>
-                                    <div className="col-12">
-                                        <div className="mb-3">
-                                            <div className="form-check">
-                                                <input 
-                                                    className="form-check-input" 
-                                                    type="checkbox" 
-                                                    required
-                                                />
-                                                <label className="form-check-label"><span className="text-danger">*</span>I Accept <Link href="#" className="text-primary">Terms And Condition</Link></label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="row">
-                                    <div className="col-12">
-                                        <button type="submit" className="btn btn-primary w-100">
-                                            Apply Now
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>  
-                </div>
+  // Error UI
+  if (fetchError || !jobData) {
+    return (
+      <>
+        <Navbar />
+        <div 
+          className="min-vh-100 d-flex align-items-center justify-content-center"
+          style={{
+            backgroundImage: "url('/images/applyJobBackground.jpg')",
+            backgroundColor: '#b3e6ff', // Fallback color
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed'
+          }}
+        >
+          <div className="container text-center">
+            <div className="card shadow-lg border-0 p-4" style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              borderRadius: '15px',
+              backdropFilter: 'blur(10px)'
+            }}>
+              <h4 className="mb-2">Job not found</h4>
+              <p className="text-muted">{fetchError}</p>
+              <button
+                className="btn btn-primary mt-3"
+                onClick={() => window.history.back()}
+              >
+                Go Back
+              </button>
             </div>
-        </section>
-        <Footer top={true}/>
-        <ScrollTop/>
-        </>
-    )
-}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // MAIN UI
+  return (
+    <>
+      <Navbar />
+      <div 
+        className="min-vh-100 py-5"
+        style={{
+          backgroundImage: "url('/images/applyJobBackground.jpg')",
+          backgroundColor: '#b3e6ff', // Fallback color
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        {/* Toast Notification */}
+        {toast.show && (
+          <div 
+            className={`toast show position-fixed top-0 end-0 m-4 ${toast.type === "success" ? "bg-success" : "bg-danger"} text-white`}
+            style={{ zIndex: 1050, minWidth: "300px" }}
+            role="alert"
+          >
+            <div className="d-flex">
+              <div className="toast-body">
+                {toast.message}
+              </div>
+              <button 
+                type="button" 
+                className="btn-close btn-close-white me-2 m-auto" 
+                onClick={() => setToast({ show: false, message: "", type: "" })}
+              ></button>
+            </div>
+          </div>
+        )}
+
+        <div className="container" style={{ paddingTop: "80px" }}>
+          <div className="row justify-content-center">
+            <div className="col-12 col-md-8 col-lg-6">
+              
+              {/* JOB INFO CARD - WHITE WITH TRANSPARENCY */}
+              <div className="card shadow-lg mb-4 border-0">
+                <div className="card-body text-center py-4" style={{
+                  background: 'rgba(255, 255, 255, 0.91)',
+                  borderRadius: '15px',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <h3 className="card-title text-dark fw-bold mb-2">{jobData.title}</h3>
+                  <h5 className="text-primary fw-semibold">{jobData.company_name}</h5>
+                </div>
+              </div>
+
+              {/* APPLICATION FORM CARD - WHITE WITH TRANSPARENCY */}
+              <div className="card shadow-lg mb-5 border-0">
+                <div className="card-body p-4" style={{
+                  background: 'rgba(255, 255, 255, 0.81)',
+                  borderRadius: '15px',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <h5 className="mb-4 text-dark fw-bold text-center">Apply for this Job</h5>
+
+                  <form onSubmit={handleSubmit}>
+                    {/* PHONE */}
+                    <div className="mb-3">
+                      <label className="form-label text-dark fw-semibold">Phone Number *</label>
+                      <input
+                        type="text"
+                        name="phoneNumber"
+                        className="form-control"
+                        value={formData.phoneNumber}
+                        onChange={handleChange}
+                        placeholder="Enter your phone number"
+                        style={{
+                          borderRadius: '8px',
+                          border: '1px solid #dee2e6',
+                          padding: '8px 12px',
+                          fontSize: '14px',
+                          background: 'white'
+                        }}
+                      />
+                      {errors.phoneNumber && (
+                        <small className="text-danger fw-semibold">{errors.phoneNumber}</small>
+                      )}
+                    </div>
+
+                    {/* SALARY */}
+                    <div className="mb-3">
+                      <label className="form-label text-dark fw-semibold">Expected Salary *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="expectedSalary"
+                        className="form-control"
+                        value={formData.expectedSalary}
+                        onChange={handleChange}
+                        placeholder="50000"
+                        style={{
+                          borderRadius: '8px',
+                          border: '1px solid #dee2e6',
+                          padding: '8px 12px',
+                          fontSize: '14px',
+                          background: 'white'
+                        }}
+                      />
+                      {errors.expectedSalary && (
+                        <small className="text-danger fw-semibold">{errors.expectedSalary}</small>
+                      )}
+                    </div>
+
+                    {/* CV UPLOAD */}
+                    <div className="mb-4">
+                      <label className="form-label text-dark fw-semibold">Upload CV (PDF Only) *</label>
+                      <input
+                        type="file"
+                        name="cvFile"
+                        accept=".pdf"
+                        className="form-control"
+                        onChange={handleChange}
+                        style={{
+                          borderRadius: '8px',
+                          border: '1px solid #dee2e6',
+                          padding: '8px 12px',
+                          fontSize: '14px',
+                          background: 'white'
+                        }}
+                      />
+
+                      {formData.cvFile && (
+                        <small className="text-muted d-block mt-2 fw-semibold">
+                          📄 Selected: {formData.cvFile.name}
+                        </small>
+                      )}
+
+                      {errors.cvFile && (
+                        <small className="text-danger d-block fw-semibold">{errors.cvFile}</small>
+                      )}
+                    </div>
+
+                    {/* SUBMIT BUTTON */}
+                    <button
+                      type="submit"
+                      className="btn d-block mx-auto fw-bold py-2 px-4"
+                      disabled={isSubmitting}
+                      style={{ 
+                        minWidth: '180px',
+                        background: 'linear-gradient(135deg, #919bff 0%, #133a94 100%)',
+                        border: 'none',
+                        borderRadius: '25px',
+                        fontSize: '14px',
+                        color: 'white',
+                        transition: 'all 0.3s ease',
+                        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSubmitting) {
+                          e.target.style.background = 'linear-gradient(135deg, #133a94 0%, #919bff 100%)';
+                          e.target.style.transform = 'translateY(-2px)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.3)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSubmitting) {
+                          e.target.style.background = 'linear-gradient(135deg, #919bff 0%, #133a94 100%)';
+                          e.target.style.transform = 'translateY(0)';
+                          e.target.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
+                        }
+                      }}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2"></span>
+                          Submitting...
+                        </>
+                      ) : (
+                        "Submit Application"
+                      )}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default JobApplicationForm;

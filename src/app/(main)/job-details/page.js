@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Select from 'react-select';
+import { useRouter } from "next/navigation";
 
 import Navbar from "../componants/navbar";
 import FormSelect from "../componants/formSelect";
@@ -14,6 +15,7 @@ import AboutTwo from "../componants/aboutTwo";
 import {FiClock, FiMapPin, FiBookmark, FiAward, FiChevronDown, FiChevronUp, FiCalendar} from "../assets/icons/vander"
 
 export default function JobDetails(){
+    const router = useRouter();
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -31,6 +33,32 @@ export default function JobDetails(){
     useEffect(() => {
         fetchJobs();
     }, []);
+
+const handleApplyNow = async (e, jobId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+        const response = await fetch('/api/auth/me');
+        
+        if (response.ok) {
+            const userData = await response.json();
+            
+            if (userData.user && userData.user.au_type === '2') {
+                router.push(`/job-apply/${jobId}`);
+            } else {
+                // ONLY ADD THIS LINE - pass redirect as URL parameter
+                router.push(`/login?message=Please login as Job seeker&redirect=/job-apply/${jobId}`);
+            }
+        } else {
+            // ONLY ADD THIS LINE - pass redirect as URL parameter
+            router.push(`/login?message=Please login as Job seeker&redirect=/job-apply/${jobId}`);
+        }
+    } catch (error) {
+        // ONLY ADD THIS LINE - pass redirect as URL parameter
+        router.push(`/login?message=Please login as Job seeker&redirect=/job-apply/${jobId}`);
+    }
+};
 
     const fetchJobs = async () => {
         try {
@@ -608,13 +636,30 @@ export default function JobDetails(){
                                                         </span>
                                                     </div>
 
-                                                    <div className="mt-3 mt-md-0">
+                                                    <div className="mt-4 mt-md-0">
                                                         <button className="btn btn-sm btn-icon btn-pills btn-soft-primary bookmark">
                                                             <FiBookmark className="icons"/>
                                                         </button>
-                                                        <Link href={`/job-apply/${job.j_id}`} className="btn btn-sm btn-primary w-full ms-md-1">
+                                                        <button 
+                                                            onClick={(e) => handleApplyNow(e, job.j_id)}
+                                                            className="btn btn-sm btn-primary w-full ms-md-1"
+                                                        >
                                                             Apply Now
-                                                        </Link>
+                                                        </button>
+
+    {/* Deadline Display */}
+    {job.j_deadline && (
+        <div className="mt-3 text-center">
+            <small className="text-muted d-flex align-items-center justify-content-center">
+                <FiCalendar className="fea icon-sm me-1 align-middle"/>
+                Deadline: {new Date(job.j_deadline).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                })}
+            </small>
+        </div>
+    )}
                                                     </div>
                                                 </div>
                                             </Link>

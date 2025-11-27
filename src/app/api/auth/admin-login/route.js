@@ -32,18 +32,34 @@ export async function POST(request) {
         }
 
         const token = jwt.sign(
-            { userId: user.au_id, email: user.au_email },
+            { 
+                userId: user.au_id, 
+                email: user.au_email,
+                au_type: user.au_type // ADD THIS to include user type in token
+            },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
         const { au_pass, ...userWithoutPassword } = user;
 
-        return NextResponse.json({
+        // CREATE RESPONSE AND SET COOKIE
+        const response = NextResponse.json({
             token,
             user: userWithoutPassword,
             message: 'Admin login successful'
         });
+
+        // SET THE TOKEN IN COOKIES
+        response.cookies.set('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            path: '/',
+        });
+
+        return response;
 
     } catch (error) {
         return NextResponse.json({ message: 'Server error' }, { status: 500 });

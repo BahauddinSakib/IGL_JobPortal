@@ -1,6 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface User {
   au_id: number;
@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     checkAuth();
@@ -61,33 +62,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string) => {
+const login = async (email: string, password: string) => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (response.ok) {
-        localStorage.setItem('token', data.token);
-        setUser(data.user);
-        
-        if (data.user.au_type === '1') {
-          router.push('/admin');
+        if (response.ok) {
+            // Get redirect from URL parameters BEFORE setting user/token
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirectUrl = urlParams.get('redirect');
+            
+            // Check if coming from apply page and user is not a seeker
+            if (redirectUrl && redirectUrl.includes('/job-apply/') && data.user.au_type !== '2') {
+                // Don't login - return error instead
+                return { 
+                    success: false, 
+                    error: 'Please login as a Applicant.' 
+                };
+            }
+            
+            // Only proceed with login if allowed
+            localStorage.setItem('token', data.token);
+            setUser(data.user);
+            
+            if (data.user.au_type === '1') {
+                router.push('/admin');
+            } else if (data.user.au_type === '3') {
+                router.push('/');
+            } else if (redirectUrl) {
+                router.push(redirectUrl);
+            } else {
+                router.push('/');
+            }
+            return { success: true };
         } else {
-          router.push('/');
+            return { success: false, error: data.message };
         }
-        return { success: true };
-      } else {
-        return { success: false, error: data.message };
-      }
     } catch (error) {
-      return { success: false, error: 'Login failed' };
+        return { success: false, error: 'Login failed' };
     }
-  };
+};
 
   const adminLogin = async (email: string, password: string) => {
     try {
@@ -125,7 +144,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         setUser(data.user);
-        router.push('/');
+        
+        // Get redirect URL from search parameters for signup too
+        const redirectUrl = searchParams?.get('redirect');
+        if (redirectUrl) {
+          router.push(redirectUrl);
+        } else {
+          router.push('/');
+        }
         return { success: true };
       } else {
         return { success: false, error: data.message };

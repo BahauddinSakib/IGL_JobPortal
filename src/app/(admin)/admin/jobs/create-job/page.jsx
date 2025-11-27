@@ -7,6 +7,8 @@ import Select from 'react-select';
 import toast, { Toaster } from 'react-hot-toast';
 
 const CreateJobPage = () => {
+
+  
   const [currentStep, setCurrentStep] = useState(1);
   
   // Define steps array at the top
@@ -21,6 +23,7 @@ const CreateJobPage = () => {
     // Step 1: Job Information
     j_title: "",
     j_date: "",
+    j_deadline: "",
     j_category: "",
     j_location: "",
     j_company_name: "",
@@ -314,6 +317,7 @@ const CreateJobPage = () => {
     );
   };
 
+
 const handleSubmit = async (e) => {
   e.preventDefault();
   setLoading(true);
@@ -332,12 +336,14 @@ const handleSubmit = async (e) => {
   // Always append salary min/max, even if empty
   formDataToSend.append('j_salary_min', formData.j_salary_min || '');
   formDataToSend.append('j_salary_max', formData.j_salary_max || '');
+    formDataToSend.append('j_deadline', formData.j_deadline || '');
 
   // Debug what we're sending
   console.log('Salary data being sent:', {
     type: formData.j_salary_type,
     min: formData.j_salary_min,
-    max: formData.j_salary_max
+    max: formData.j_salary_max,
+    deadline: formData.j_deadline
   });
 
   // Prepare age range
@@ -391,19 +397,34 @@ const handleSubmit = async (e) => {
   formDataToSend.append('j_degree_type_id', formData.j_degree_type_id || '');
   formDataToSend.append('j_degree_level_id', formData.j_degree_level_id || '');
   formDataToSend.append('j_employment_status', j_employment_status.toString());
-  formDataToSend.append('j_status', '1');
+  formDataToSend.append('j_status', '2'); // Status 2 = Processing/Pending Approval
 
   try {
-    const response = await fetch('/api/auth/jobs', {
+    // === ONLY CHANGE THIS PART ===
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      toast.error('Please login first');
+      setLoading(false);
+      return;
+    }
+
+    // USE THE NEW AUTHENTICATED ENDPOINT
+    const response = await fetch('/api/auth/jobs/authenticated', {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}` // ADD THIS LINE
+      },
       body: formDataToSend,
     });
+    // === END OF CHANGES ===
 
     const result = await response.json();
     console.log('API Response:', result);
 
     if (response.ok) {
-      toast.success('Job created successfully!', {
+      toast.success('Job submitted for approval! It will be published after admin review.',  {
         duration: 4000,
         position: 'top-right',
       });
@@ -441,6 +462,8 @@ const handleSubmit = async (e) => {
     setLoading(false);
   }
 };
+
+
 
   return (
     <div className="container-fluid p-4">
@@ -571,127 +594,156 @@ const handleSubmit = async (e) => {
                   </div>
                 </div>
 
-                {/* Second Row - Vacancy, Date, Job Type & Workplace */}
-                <div className="row mb-3">
-                  <div className="col-md-3">
-                    <label className="form-label fw-bold text-dark">
-                      Vacancy No. *
-                    </label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      name="j_vacancy"
-                      value={formData.j_vacancy}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
+{/* Second Row - Vacancy, Date, Deadline, Job Type & Workplace */}
+<div className="row mb-3">
+  {/* Vacancy No */}
+  <div className="col-md-2">
+    <label className="form-label fw-bold text-dark">
+      Vacancy No. *
+    </label>
+    <input
+      type="number"
+      className="form-control"
+      name="j_vacancy"
+      value={formData.j_vacancy}
+      onChange={handleInputChange}
+      required
+    />
+  </div>
 
-                  <div className="col-md-3">
-                    <label className="form-label fw-bold text-dark">Date</label>
-                    <div style={{ marginTop: "2px" }}>
-                      <DatePicker
-                        selected={formData.j_date ? new Date(formData.j_date) : new Date()}
-                        onChange={(date) =>
-                          setFormData(prev => ({
-                            ...prev,
-                            j_date: date.toISOString().split("T")[0]
-                          }))
-                        }
-                        minDate={new Date()}
-                        dateFormat="yyyy-MM-dd"
-                        className="form-control"
-                        placeholderText="Select date"
-                        showIcon
-                        icon={<i className="mdi mdi-calendar text-muted"></i>}
-                        toggleCalendarOnIconClick
-                      />
-                    </div>
-                  </div>
+  {/* Date */}
+  <div className="col-md-2">
+    <label className="form-label fw-bold text-dark">Date</label>
+    <div style={{ marginTop: "2px" }}>
+      <DatePicker
+        selected={formData.j_date ? new Date(formData.j_date) : new Date()}
+        onChange={(date) =>
+          setFormData(prev => ({
+            ...prev,
+            j_date: date.toISOString().split("T")[0]
+          }))
+        }
+        minDate={new Date()}
+        dateFormat="yyyy-MM-dd"
+        className="form-control"
+        placeholderText="Select date"
+        showIcon
+        icon={<i className="mdi mdi-calendar text-muted"></i>}
+        toggleCalendarOnIconClick
+      />
+    </div>
+  </div>
 
-                  {/* Job Type and Workplace in the same row */}
-                  <div className="col-md-6">
-                    <div className="row">
-                      {/* Job Type*/}
-                      <div className="col-md-6">
-                        <label className="form-label fw-bold text-dark">Job Type</label>
-                        <Select
-                          options={jobTypes.map(jobType => ({
-                            value: jobType.jt_id,
-                            label: jobType.display_name || jobType.jt_name
-                          }))}
-                          value={
-                            formData.j_type_id
-                              ? jobTypes
-                                  .map(jobType => ({
-                                    value: jobType.jt_id,
-                                    label: jobType.display_name || jobType.jt_name
-                                  }))
-                                  .find(opt => opt.value === formData.j_type_id)
-                              : null
-                          }
-                          onChange={(selectedOption) =>
-                            setFormData(prev => ({
-                              ...prev,
-                              j_type_id: selectedOption ? selectedOption.value : ""
-                            }))
-                          }
-                          placeholder="Select Job Type"
-                          isSearchable={true}
-                          className="select2-box"
-                          classNamePrefix="select2"
-                          styles={{
-                            control: (base, state) => ({
-                              ...base,
-                              borderColor: state.isFocused ? "#86b7fe" : "#dee2e6",
-                              boxShadow: state.isFocused
-                                ? "0 0 0 0.25rem rgba(13, 110, 253, 0.25)"
-                                : "none",
-                              minHeight: "38px",
-                              "&:hover": {
-                                borderColor: state.isFocused ? "#86b7fe" : "#dee2e6",
-                              },
-                            }),
-                            menu: (base) => ({
-                              ...base,
-                              zIndex: 9999,
-                            }),
-                          }}
-                        />
-                      </div>
+{/* Deadline */}
+<div className="col-md-2">
+  <label className="form-label fw-bold text-dark">Deadline</label>
+  <div style={{ marginTop: "2px" }}>
+    <DatePicker
+      selected={formData.j_deadline ? new Date(formData.j_deadline) : null}
+      onChange={(date) => {
+        console.log('DatePicker onChange:', date); // Debug log
+        setFormData(prev => ({
+          ...prev,
+          j_deadline: date ? date.toISOString().split("T")[0] : null
+        }));
+      }}
+      minDate={new Date()}
+      dateFormat="yyyy-MM-dd"
+      className="form-control"
+      placeholderText="Select deadline"
+      showIcon
+      icon={<i className="mdi mdi-calendar text-muted"></i>}
+      toggleCalendarOnIconClick
+      isClearable
+      onCalendarClose={() => {
+        console.log('Current j_deadline value:', formData.j_deadline); // Debug log
+      }}
+    />
+  </div>
+</div>
 
-                      <div className="col-md-6">
-                        <label className="form-label fw-bold text-dark">
-                          Workplace *
-                        </label>
-                        <div className="d-flex gap-3">
-                          <div className="form-check">
-                            <input
-                              className="form-check-input"
-                              type="radio"
-                              name="j_work_place"
-                              value="1"
-                              checked={formData.j_work_place === "1"}
-                              onChange={handleInputChange}
-                              required
-                            />
-                            <label className="form-check-label text-dark">From Office</label>
-                          </div>
-                          <div className="form-check">
-                            <input
-                              className="form-check-input"
-                              type="radio"
-                              name="j_work_place"
-                              value="2"
-                              checked={formData.j_work_place === "2"}
-                              onChange={handleInputChange}
-                              required
-                            />
-                            <label className="form-check-label text-dark">From Home</label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+  {/* Job Type */}
+  <div className="col-md-3">
+    <label className="form-label fw-bold text-dark">Job Type</label>
+    <Select
+      options={jobTypes.map(jobType => ({
+        value: jobType.jt_id,
+        label: jobType.display_name || jobType.jt_name
+      }))}
+      value={
+        formData.j_type_id
+          ? jobTypes
+              .map(jobType => ({
+                value: jobType.jt_id,
+                label: jobType.display_name || jobType.jt_name
+              }))
+              .find(opt => opt.value === formData.j_type_id)
+          : null
+      }
+      onChange={(selectedOption) =>
+        setFormData(prev => ({
+          ...prev,
+          j_type_id: selectedOption ? selectedOption.value : ""
+        }))
+      }
+      placeholder="Select Job Type"
+      isSearchable={true}
+      className="select2-box"
+      classNamePrefix="select2"
+      styles={{
+        control: (base, state) => ({
+          ...base,
+          borderColor: state.isFocused ? "#86b7fe" : "#dee2e6",
+          boxShadow: state.isFocused
+            ? "0 0 0 0.25rem rgba(13, 110, 253, 0.25)"
+            : "none",
+          minHeight: "38px",
+          "&:hover": {
+            borderColor: state.isFocused ? "#86b7fe" : "#dee2e6",
+          },
+        }),
+        menu: (base) => ({
+          ...base,
+          zIndex: 9999,
+        }),
+      }}
+    />
+  </div>
+
+  {/* Workplace */}
+  <div className="col-md-3">
+    <label className="form-label fw-bold text-dark">
+      Workplace *
+    </label>
+    <div className="d-flex gap-3">
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          type="radio"
+          name="j_work_place"
+          value="1"
+          checked={formData.j_work_place === "1"}
+          onChange={handleInputChange}
+          required
+        />
+        <label className="form-check-label text-dark">From Office</label>
+      </div>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          type="radio"
+          name="j_work_place"
+          value="2"
+          checked={formData.j_work_place === "2"}
+          onChange={handleInputChange}
+          required
+        />
+        <label className="form-check-label text-dark">From Home</label>
+      </div>
+    </div>
+
+
+
                   </div>
                 </div>
 

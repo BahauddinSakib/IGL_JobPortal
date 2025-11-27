@@ -21,9 +21,9 @@ export async function GET(request) {
     connection = await mysql.createConnection(dbConfig);
 
     if (id) {
-      // Get single job by ID
+      // Get single job by ID - ADDED EXPIRATION FILTER
       const [jobs] = await connection.execute(
-        `SELECT * FROM jobs WHERE j_id = ? AND j_status = 1`,
+        `SELECT * FROM jobs WHERE j_id = ? AND j_status = 1 AND j_is_paused = 0 AND (j_deadline IS NULL OR j_deadline >= CURDATE())`,
         [id]
       );
 
@@ -40,15 +40,15 @@ export async function GET(request) {
       });
     }
 
-    // Get all published jobs
+    // Get all published jobs - ADDED EXPIRATION FILTER
     const [jobs] = await connection.execute(`
       SELECT 
-        j_id, j_title, j_date, j_category, j_location, j_company_type, j_company_name,
+        j_id, j_title, j_date,j_deadline, j_category, j_location, j_company_type, j_company_name,
         j_vacancy, j_work_place, j_description, j_salary, j_gender, j_age,
         j_degree_name, j_institution, j_skills, j_matching_strength,
         j_employment_status, j_created_at, j_image
       FROM jobs 
-      WHERE j_status = 1 
+      WHERE j_status = 1 AND j_is_paused = 0 AND (j_deadline IS NULL OR j_deadline >= CURDATE())
       ORDER BY j_created_at DESC
     `);
 
@@ -85,6 +85,7 @@ export async function POST(request) {
       // Step 1: Job Information
       j_title: formData.get('j_title'),
       j_date: formData.get('j_date'),
+      j_deadline: formData.get('j_deadline'), 
       j_category: formData.get('j_category'),
       j_location: formData.get('j_location'),
       j_company_name: formData.get('j_company_name'),
@@ -124,7 +125,9 @@ export async function POST(request) {
     console.log('Received job data:', {
       title: jobData.j_title,
       salary_type: jobData.j_salary_type,
-      has_image: !!jobData.j_image
+      has_image: !!jobData.j_image,
+      deadline: jobData.j_deadline, 
+      deadline_type: typeof jobData.j_deadline
     });
 
     // Validate required fields
@@ -208,56 +211,106 @@ export async function POST(request) {
       }
     }
 
-    // Insert job into database
-    const [result] = await connection.execute(`
-      INSERT INTO jobs (
-        j_title, j_date, j_category, j_location, j_company_name, j_company_type,
-        j_vacancy, j_work_place, j_description, j_salary,
-        j_gender, j_age, j_degree_name, j_institution, j_skills,
-        j_matching_strength, j_type_id, j_skills_id, j_experience_id, 
-        j_degree_type_id, j_degree_level_id, j_employment_status, j_status,
-        j_image, j_created_at, j_updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-    `, [
-      jobData.j_title,
-      jobData.j_date || new Date().toISOString().split('T')[0],
-      jobData.j_category,
-      jobData.j_location,
-      jobData.j_company_name,
-      jobData.j_company_type,
-      parseInt(jobData.j_vacancy) || 1,
-      parseInt(jobData.j_work_place) || 1,
-      jobData.j_description,
-      finalSalary,
-      j_gender,
-      ageRange,
-      jobData.j_degree_name || '',
-      jobData.j_institution || '',
-      jobData.j_skills || '',
-      parseFloat(jobData.j_matching_strength) || 3,
-      j_type_id,
-      j_skills_id,
-      j_experience_id,
-      j_degree_type_id,
-      j_degree_level_id,
-      parseInt(jobData.j_employment_status) || 1,
-      1, // j_status = 1 (published)
-      imageFilename
-    ]);
+    // Start transaction for job and approval insertion
+    await connection.beginTransaction();
 
-    return NextResponse.json({
-      success: true,
-      jobId: result.insertId,
-      message: 'Job created successfully',
-      salary: finalSalary,
-      hasImage: !!imageFilename
-    });
+    try {
+      // BOTH ADMIN AND RECRUITER GO FOR APPROVAL
+      // For testing: Hardcode user info (replace with actual auth later)
+      const current_user_id = 1; // TODO: Get from auth session
+      const current_user_type = 1; // TODO: Get from auth session (1=admin, 3=recruiter)
+
+      const j_status = 2; // Both admin and recruiter jobs go to Processing/Pending Approval
+
+      // Determine who created the job
+      let j_recruiter_id = null;
+      let j_created_by = null;
+
+      if (current_user_type === 3) {
+        // Recruiter created job
+        j_recruiter_id = current_user_id;
+        j_created_by = 'recruiter';
+      } else if (current_user_type === 1) {
+        // Admin created job
+        j_created_by = 'admin';
+      }
+
+      // Insert job into database with status 2 (Processing/Pending Approval)
+      const [jobResult] = await connection.execute(`
+        INSERT INTO jobs (
+          j_title, j_date, j_deadline, j_category, j_location, j_company_name, j_company_type,
+          j_vacancy, j_work_place, j_description, j_salary,
+          j_gender, j_age, j_degree_name, j_institution, j_skills,
+          j_matching_strength, j_type_id, j_skills_id, j_experience_id, 
+          j_degree_type_id, j_degree_level_id, j_employment_status, j_status,
+          j_image, j_recruiter_id, j_submitted_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      `, [
+        jobData.j_title,
+        jobData.j_date || new Date().toISOString().split('T')[0],
+        jobData.j_deadline || null,
+        jobData.j_category,
+        jobData.j_location,
+        jobData.j_company_name,
+        jobData.j_company_type,
+        parseInt(jobData.j_vacancy) || 1,
+        parseInt(jobData.j_work_place) || 1,
+        jobData.j_description,
+        finalSalary,
+        j_gender,
+        ageRange,
+        jobData.j_degree_name || '',
+        jobData.j_institution || '',
+        jobData.j_skills || '',
+        parseFloat(jobData.j_matching_strength) || 3,
+        j_type_id,
+        j_skills_id,
+        j_experience_id,
+        j_degree_type_id,
+        j_degree_level_id,
+        parseInt(jobData.j_employment_status) || 1,
+        j_status,
+        imageFilename,
+        j_recruiter_id
+      ]);
+
+      const jobId = jobResult.insertId;
+
+      // Create approval record for BOTH admin and recruiter jobs
+      await connection.execute(`
+        INSERT INTO job_approvals (
+          ja_job_id, ja_recruiter_id, ja_current_status, ja_submitted_at
+        ) VALUES (?, ?, 2, NOW())
+      `, [jobId, current_user_id]); // Use current_user_id for both cases
+
+      // Commit transaction
+      await connection.commit();
+
+      const creatorType = current_user_type === 1 ? 'Admin' : 'Recruiter';
+      
+      return NextResponse.json({
+        success: true,
+        jobId: jobId,
+        message: `${creatorType} job submitted for approval! It will be published after review.`,
+        salary: finalSalary,
+        hasImage: !!imageFilename,
+        status: j_status,
+        createdBy: creatorType.toLowerCase()
+      });
+
+    } catch (error) {
+      // Rollback transaction if any error occurs
+      await connection.rollback();
+      throw error;
+    }
 
   } catch (error) {
     console.error('Database error in POST:', error);
     
     let errorMessage = 'Failed to create job';
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+    if (error.code === 'ER_BAD_FIELD_ERROR' && error.message.includes('j_recruiter_id')) {
+      errorMessage = 'Database configuration error: Missing j_recruiter_id column. Please run: ALTER TABLE jobs ADD COLUMN j_recruiter_id INT NULL;';
+    } else if (error.code === 'ER_NO_REFERENCED_ROW_2') {
       errorMessage = 'Invalid reference ID provided. Please check the selected options.';
     } else {
       errorMessage = error.message;
