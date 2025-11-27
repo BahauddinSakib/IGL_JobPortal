@@ -57,13 +57,13 @@
     "nouislider-react": "^3.4.2",
     "pdf-parse": "^2.4.5",
     "quill": "^2.0.3",
-    "react": "19.0.0",
+    "react": "18.3.1",
     "react-apexcharts": "^1.8.0",
     "react-bootstrap": "^2.10.10",
     "react-chartjs-2": "^5.3.1",
     "react-countup": "^6.5.3",
     "react-datepicker": "^8.9.0",
-    "react-dom": "19.0.0",
+    "react-dom": "18.3.1",
     "react-dropzone": "^14.3.5",
     "react-flatpickr": "^3.10.13",
     "react-hook-form": "7.53.0",
@@ -95,10 +95,12 @@
     "@types/node": "24.10.0",
     "@types/react": "18.3.5",
     "@types/react-albus": "^2.0.12",
-    "@types/react-dom": "19",
+    "@types/react-dom": "18.3.5",
     "eslint": "^8",
     "eslint-config-next": "14.0.3",
     "sass": "^1.93.3",
     "typescript": "^5"
   }
 }
+
+
