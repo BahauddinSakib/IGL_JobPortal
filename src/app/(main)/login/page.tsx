@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useAuth } from '@/contexts/AuthContext';
+import { AuthContext } from "@/app/(main)/contexts/AuthContext";
 import Navbar from "../componants/navbarDark"; // Make sure this file exists
 
 export default function Login(){
@@ -99,4 +99,5 @@ export default function Login(){
             </section>
         </>
     )
+
 }
