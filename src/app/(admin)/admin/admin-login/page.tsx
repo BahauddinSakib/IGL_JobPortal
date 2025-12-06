@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
+import { AuthContext } from "@/app/(main)/contexts/AuthContext";
 //import Navbar from "../../componants/navbarDark";
 
 export default function AdminLogin() {
@@ -224,4 +224,5 @@ export default function AdminLogin() {
       </section>
     </>
   );
+
 }
