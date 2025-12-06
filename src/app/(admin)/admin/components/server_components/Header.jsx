@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext";
+import { AuthContext } from "@/app/(main)/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
 const Header = () => {
@@ -267,5 +267,6 @@ const Header = () => {
     </header>
   );
 };
+
 
 export default Header;
