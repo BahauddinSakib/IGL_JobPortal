@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
+import { AuthContext } from "@/contexts/AuthContext";
+
 
 export default function AdminSignup() {
   const [formData, setFormData] = useState({
@@ -345,4 +346,5 @@ export default function AdminSignup() {
       </div>
     </section>
   );
+
 }
