@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthContext } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import useAuth from '@/app/custom_hooks/useAuthUser';
+import useAuth from '@/components/custom_hooks/useAuthUser';
 
 
 const Header = () => {
@@ -272,5 +272,6 @@ const Header = () => {
 
 
 export default Header;
+
 
 
